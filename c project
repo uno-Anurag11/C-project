@@ -1,0 +1,47 @@
+#include <iostream>
+#include <string>
+#include <curl/curl.h>
+
+// Callback function to write received data
+size_t writeCallback(void *ptr, size_t size, size_t nmemb, std::string *data) {
+    data->append((char*)ptr, size * nmemb);
+    return size * nmemb;
+}
+
+int main() {
+    // Initialize curl
+    CURL *curl;
+    CURLcode res;
+    curl = curl_easy_init();
+    std::string response;
+
+    if(curl) {
+        // Ask for city input
+        std::string city;
+        std::cout << "Enter city: ";
+        std::getline(std::cin, city);
+
+        // Set the URL to wttr.in for the weather of the specified location
+        std::string url = "wttr.in/" + city + "?format=%C+%t";
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+
+        // Set the callback function to receive data
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+
+        // Perform the request
+        res = curl_easy_perform(curl);
+
+        // Check for errors
+        if(res != CURLE_OK)
+            std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
+
+        // Clean up curl
+        curl_easy_cleanup(curl);
+
+        // Output the weather
+        std::cout << "Weather in " << city << ": " << response << std::endl;
+    }
+
+    return 0;
+}
